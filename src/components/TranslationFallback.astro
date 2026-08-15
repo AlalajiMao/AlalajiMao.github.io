@@ -1,0 +1,33 @@
+---
+import type { Lang } from '../consts.ts';
+import { t } from '../i18n/utils.ts';
+
+interface Props {
+  /** Language of the page the visitor is on — i.e. the one that is MISSING. */
+  lang: Lang;
+  /** Language the content actually exists in. */
+  availableLang: Lang;
+  /** URL of the version that does exist. */
+  href: string;
+  /** Where "back" goes — the section index in the current language. */
+  backHref: string;
+}
+
+const { lang, availableLang, href, backHref } = Astro.props;
+const tr = t(lang);
+// Name of the language the content exists in, written in the current UI language.
+const name = tr(`lang.name.${availableLang}`);
+---
+
+<div class="prose-wrap">
+  <div class="fallback">
+    <h1>{tr('fallback.title')}</h1>
+    <p>{tr('fallback.body', { lang: name })}</p>
+    <div class="btn-row">
+      <a class="btn" href={href} lang={availableLang} hreflang={availableLang}>
+        {tr('fallback.cta', { lang: name })}
+      </a>
+      <a class="btn btn-ghost" href={backHref}>{tr('fallback.back')}</a>
+    </div>
+  </div>
+</div>

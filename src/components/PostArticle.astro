@@ -1,0 +1,94 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { render } from 'astro:content';
+import type { Lang } from '../consts.ts';
+import { formatDate, readingTime, t } from '../i18n/utils.ts';
+
+interface Props {
+  entry: CollectionEntry<'thoughts'> | CollectionEntry<'labs'>;
+  lang: Lang;
+}
+
+const { entry, lang } = Astro.props;
+const tr = t(lang);
+const { Content } = await render(entry);
+
+const data = entry.data as {
+  title: string;
+  description: string;
+  created: Date;
+  updated?: Date;
+  tags: string[];
+  premise?: string;
+  repo?: string;
+  demo?: string;
+};
+
+const minutes = readingTime(entry.body ?? '', lang);
+const links = [
+  data.repo ? { href: data.repo, label: tr('labs.repo') } : null,
+  data.demo ? { href: data.demo, label: tr('labs.demo') } : null,
+].filter((l): l is { href: string; label: string } => l !== null);
+---
+
+<div class="prose-wrap">
+  <article>
+    <header class="article-head">
+      <h1>{data.title}</h1>
+      <p class="lede">{data.description}</p>
+      <div class="article-meta">
+        <span>{tr('meta.created')} {formatDate(data.created, lang)}</span>
+        {data.updated && <span>· {tr('meta.updated')} {formatDate(data.updated, lang)}</span>}
+        <span>· {tr('meta.readingTime', { n: minutes })}</span>
+        {
+          data.tags.length > 0 && (
+            <span class="tag-row">
+              {data.tags.map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </span>
+          )
+        }
+      </div>
+    </header>
+
+    {
+      data.premise && (
+        <aside class="panel">
+          <p class="panel-title">{tr('labs.premise')}</p>
+          <p class="premise-text">{data.premise}</p>
+        </aside>
+      )
+    }
+
+    {
+      links.length > 0 && (
+        <div class="btn-row link-row">
+          {links.map((l) => (
+            <a class="btn btn-ghost" href={l.href} target="_blank" rel="noopener noreferrer">
+              {l.label} →
+            </a>
+          ))}
+        </div>
+      )
+    }
+
+    <div class="prose article-body">
+      <Content />
+    </div>
+  </article>
+</div>
+
+<style>
+  .premise-text {
+    font-size: 0.9375rem;
+    color: var(--text-2);
+  }
+  .link-row {
+    justify-content: flex-start;
+    margin-top: 1.25rem;
+  }
+  .article-body {
+    margin-top: 2rem;
+  }
+</style>

@@ -1,0 +1,43 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { LANGS, type Lang } from '../../../consts.ts';
+import { formatDate, path, published, splitId, t, touched } from '../../../i18n/utils.ts';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+export const getStaticPaths: GetStaticPaths = () => LANGS.map((lang) => ({ params: { lang } }));
+
+const lang = Astro.params.lang as Lang;
+const tr = t(lang);
+
+const builds = (await published('labs', lang)).sort((a, b) => touched(b).getTime() - touched(a).getTime());
+---
+
+<BaseLayout lang={lang} title={tr('labs.title')} description={tr('labs.intro')} section="labs">
+  <div class="wrap">
+    <header class="page-head">
+      <h1>{tr('labs.title')}</h1>
+      <p class="lede">{tr('labs.intro')}</p>
+    </header>
+
+    {builds.length === 0 && <p class="empty">{tr('labs.empty')}</p>}
+
+    {
+      builds.length > 0 && (
+        <div class="card-grid">
+          {builds.map((b) => (
+            <a class="card" href={path(lang, 'labs', splitId(b.id).key)}>
+              <h3>{b.data.title}</h3>
+              <p>{b.data.description}</p>
+              <span class="card-meta">
+                {formatDate(touched(b), lang)}
+                {b.data.tags.map((tag) => (
+                  <span class="tag">{tag}</span>
+                ))}
+              </span>
+            </a>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</BaseLayout>

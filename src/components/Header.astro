@@ -1,0 +1,47 @@
+---
+import type { Lang } from '../consts.ts';
+import { path, t, otherLang } from '../i18n/utils.ts';
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props {
+  lang: Lang;
+  /** Which nav item to mark current. */
+  section?: 'notes' | 'labs' | 'thoughts' | 'about';
+  /** Where the language switch should land. Defaults to the mirrored section. */
+  altHref?: string;
+}
+
+const { lang, section, altHref } = Astro.props;
+const tr = t(lang);
+const other = otherLang(lang);
+
+const items = [
+  { key: 'notes', label: tr('nav.notes') },
+  { key: 'labs', label: tr('nav.labs') },
+  { key: 'thoughts', label: tr('nav.thoughts') },
+  { key: 'about', label: tr('nav.about') },
+] as const;
+---
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href={path(lang)}>Yukai Jiang</a>
+
+    <nav class="site-nav" aria-label={lang === 'zh' ? '主导航' : 'Main'}>
+      {
+        items.map((item) => (
+          <a href={path(lang, item.key)} aria-current={section === item.key ? 'true' : undefined}>
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="header-tools">
+      <a class="icon-btn" href={altHref ?? path(other, section ?? '')} hreflang={other} lang={other}>
+        {tr('lang.switch')}
+      </a>
+      <ThemeToggle label={tr('theme.toggle')} />
+    </div>
+  </div>
+</header>

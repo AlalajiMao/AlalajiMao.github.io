@@ -1,0 +1,79 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { LANGS, SITE, type Lang } from '../../consts.ts';
+import { t } from '../../i18n/utils.ts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export const getStaticPaths: GetStaticPaths = () => LANGS.map((lang) => ({ params: { lang } }));
+
+const lang = Astro.params.lang as Lang;
+const tr = t(lang);
+
+/**
+ * The "life" surface, deliberately small for v1. Grow it by adding blocks here;
+ * when a block outgrows this page, promote it to its own route.
+ */
+const copy = {
+  zh: {
+    intro: [
+      '我是 Yukai。目前的精力主要放在搞懂 AI Agent 是怎么被工程化地搭出来的 —— 不是调 prompt 那一层,而是 harness、上下文管理、工具设计、评估这些真正决定系统能不能用的部分。',
+      '这个站是学习过程的公开记录。我倾向于把没想清楚的东西也写出来,因为把话写下来这件事本身就会暴露哪里其实没懂。',
+    ],
+    nowTitle: '现在在做什么',
+    now: [
+      '读 DeepSeek 的 harness 实现,拆它的取舍。',
+      '把读到的机制自己实现一遍,验证是不是真的理解了。',
+    ],
+    interestsTitle: '兴趣',
+    interests: ['写作与记录', '视觉与设计', '力量训练', '做饭'],
+    interestsNote: '这块暂时只是一个清单。以后可能会长成独立的板块,也可能不会。',
+    contactTitle: '联系',
+  },
+  en: {
+    intro: [
+      "I'm Yukai. Most of my attention right now goes to how AI agents actually get engineered — not the prompt-tweaking layer, but harnesses, context management, tool design, and evaluation: the parts that decide whether a system works at all.",
+      "This site is the public log of that. I try to write down the things I haven't worked out yet, because writing is what exposes where the understanding stops.",
+    ],
+    nowTitle: 'What I’m doing now',
+    now: [
+      "Reading DeepSeek's harness implementation and picking apart its trade-offs.",
+      'Re-implementing the mechanisms I read about, to check whether I actually understood them.',
+    ],
+    interestsTitle: 'Interests',
+    interests: ['Writing and note-keeping', 'Visual design', 'Strength training', 'Cooking'],
+    interestsNote: 'Just a list for now. It may grow into its own section later, or it may not.',
+    contactTitle: 'Contact',
+  },
+} as const;
+
+const c = copy[lang];
+---
+
+<BaseLayout lang={lang} title={tr('nav.about')} section="about">
+  <div class="prose-wrap">
+    <header class="page-head">
+      <h1>{tr('nav.about')}</h1>
+    </header>
+
+    <div class="prose">
+      {c.intro.map((p) => <p>{p}</p>)}
+
+      <h2>{c.nowTitle}</h2>
+      <ul>
+        {c.now.map((item) => <li>{item}</li>)}
+      </ul>
+
+      <h2>{c.interestsTitle}</h2>
+      <ul>
+        {c.interests.map((item) => <li>{item}</li>)}
+      </ul>
+      <p style="color:var(--text-3);font-size:0.9rem">{c.interestsNote}</p>
+
+      <h2>{c.contactTitle}</h2>
+      <ul>
+        <li><a href={SITE.links.github}>GitHub</a></li>
+        {SITE.links.email && <li><a href={`mailto:${SITE.links.email}`}>{SITE.links.email}</a></li>}
+      </ul>
+    </div>
+  </div>
+</BaseLayout>

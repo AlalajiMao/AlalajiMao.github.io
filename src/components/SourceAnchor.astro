@@ -1,0 +1,56 @@
+---
+import type { Lang } from '../consts.ts';
+import { formatDate, t } from '../i18n/utils.ts';
+
+interface Props {
+  lang: Lang;
+  source: {
+    repo?: string;
+    ref?: string;
+    url?: string;
+    studiedAt?: Date;
+  };
+}
+
+const { lang, source } = Astro.props;
+const tr = t(lang);
+---
+
+<aside class="panel panel-warn source-anchor">
+  <p class="panel-title">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>
+    </svg>
+    {tr('source.label')}
+  </p>
+
+  <dl>
+    {source.repo && (
+      <>
+        <dt>{tr('source.repo')}</dt>
+        <dd><code>{source.repo}</code></dd>
+      </>
+    )}
+    {source.ref && (
+      <>
+        <dt>{tr('source.ref')}</dt>
+        <dd><code>{source.ref}</code></dd>
+      </>
+    )}
+    {source.studiedAt && (
+      <>
+        <dt>{tr('source.studiedAt')}</dt>
+        <dd>{formatDate(source.studiedAt, lang)}</dd>
+      </>
+    )}
+    {source.url && (
+      <>
+        <dt>{tr('source.permalink')}</dt>
+        <dd><a href={source.url} target="_blank" rel="noopener noreferrer">{source.url}</a></dd>
+      </>
+    )}
+  </dl>
+
+  <p class="note">{tr('source.warning')}</p>
+</aside>

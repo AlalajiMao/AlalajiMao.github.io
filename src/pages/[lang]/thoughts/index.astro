@@ -1,0 +1,44 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { LANGS, type Lang } from '../../../consts.ts';
+import { formatDate, path, published, splitId, t } from '../../../i18n/utils.ts';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+export const getStaticPaths: GetStaticPaths = () => LANGS.map((lang) => ({ params: { lang } }));
+
+const lang = Astro.params.lang as Lang;
+const tr = t(lang);
+
+const posts = (await published('thoughts', lang)).sort(
+  (a, b) => b.data.created.getTime() - a.data.created.getTime(),
+);
+---
+
+<BaseLayout lang={lang} title={tr('thoughts.title')} description={tr('thoughts.intro')} section="thoughts">
+  <div class="wrap">
+    <header class="page-head">
+      <h1>{tr('thoughts.title')}</h1>
+      <p class="lede">{tr('thoughts.intro')}</p>
+    </header>
+
+    {posts.length === 0 && <p class="empty">{tr('thoughts.empty')}</p>}
+
+    {
+      posts.length > 0 && (
+        <ul class="row-list">
+          {posts.map((post) => (
+            <li>
+              <a class="row" href={path(lang, 'thoughts', splitId(post.id).key)}>
+                <span class="row-body">
+                  <span class="row-title">{post.data.title}</span>
+                  <span class="row-desc">{post.data.description}</span>
+                </span>
+                <span class="row-side">{formatDate(post.data.created, lang)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</BaseLayout>

@@ -1,0 +1,23 @@
+---
+import type { Lang } from '../consts.ts';
+import { SITE } from '../consts.ts';
+import { t } from '../i18n/utils.ts';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const tr = t(lang);
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>© {year} {SITE.author}</p>
+    <p>
+      {tr('footer.builtWith')}{' '}
+      <a href={SITE.links.github} rel="me">GitHub</a>{' · '}
+      <a href={`/rss-${lang}.xml`}>{tr('footer.rss')}</a>
+    </p>
+  </div>
+</footer>

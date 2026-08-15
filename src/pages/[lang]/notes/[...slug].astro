@@ -1,0 +1,79 @@
+---
+import type { GetStaticPaths } from 'astro';
+import type { CollectionEntry } from 'astro:content';
+import { LANGS, type Lang } from '../../../consts.ts';
+import { noteSlug, otherLang, path, publishedAllLangs, splitId, t } from '../../../i18n/utils.ts';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import NoteArticle from '../../../components/NoteArticle.astro';
+import TranslationFallback from '../../../components/TranslationFallback.astro';
+
+/**
+ * A route is emitted for EVERY language of every note, including ones with no
+ * translation yet — those render a notice pointing at the version that does
+ * exist. A half-translated site then degrades one page at a time instead of
+ * producing broken links in the nav.
+ */
+export const getStaticPaths: GetStaticPaths = async () => {
+  const all = await publishedAllLangs('notes');
+
+  const byKey = new Map<string, Partial<Record<Lang, CollectionEntry<'notes'>>>>();
+  for (const entry of all) {
+    const { lang, key } = splitId(entry.id);
+    byKey.set(key, { ...byKey.get(key), [lang]: entry });
+  }
+
+  return [...byKey.values()].flatMap((variants) => {
+    const reference = LANGS.map((l) => variants[l]).find(Boolean);
+    if (!reference) return [];
+    const slug = noteSlug(reference);
+
+    return LANGS.map((lang) => ({
+      params: { lang, slug },
+      props: {
+        entry: variants[lang],
+        slug,
+        availableIn: LANGS.filter((l) => variants[l] !== undefined),
+      },
+    }));
+  });
+};
+
+interface Props {
+  entry?: CollectionEntry<'notes'>;
+  slug: string;
+  availableIn: Lang[];
+}
+
+const lang = Astro.params.lang as Lang;
+const { entry, slug, availableIn } = Astro.props as Props;
+
+const other = otherLang(lang);
+const altHref = path(other, 'notes', slug);
+const availableLang = availableIn.find((l) => l !== lang) ?? other;
+
+// Untranslated pages must not leak the raw slug into <title>.
+const title = entry?.data.title ?? t(lang)('fallback.title');
+const description = entry?.data.description;
+---
+
+<BaseLayout
+  lang={lang}
+  title={title}
+  description={description}
+  section="notes"
+  altHref={altHref}
+  canonical={entry ? undefined : path(availableLang, 'notes', slug)}
+>
+  {
+    entry ? (
+      <NoteArticle entry={entry} lang={lang} />
+    ) : (
+      <TranslationFallback
+        lang={lang}
+        availableLang={availableLang}
+        href={path(availableLang, 'notes', slug)}
+        backHref={path(lang, 'notes')}
+      />
+    )
+  }
+</BaseLayout>

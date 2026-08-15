@@ -1,0 +1,101 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Lang } from '../consts.ts';
+import { noteSlug, path, t } from '../i18n/utils.ts';
+import StatusBadge from './StatusBadge.astro';
+
+interface Props {
+  lang: Lang;
+  chapters: CollectionEntry<'notes'>[];
+  /** Highlight the chapter currently being read. */
+  currentSlug?: string;
+}
+
+const { lang, chapters, currentSlug } = Astro.props;
+const tr = t(lang);
+---
+
+{
+  chapters.length > 0 && (
+    <nav class="panel series-map" aria-label={tr('notes.seriesMap')}>
+      <p class="panel-title">{tr('notes.seriesMap')}</p>
+      <p class="panel-hint">{tr('notes.seriesMap.hint')}</p>
+      <ol class="chapter-list">
+        {chapters.map((ch, i) => {
+          const slug = noteSlug(ch);
+          const isCurrent = slug === currentSlug;
+          return (
+            <li class={isCurrent ? 'current' : undefined}>
+              <a href={path(lang, 'notes', slug)} aria-current={isCurrent ? 'page' : undefined}>
+                <span class="ch-num">{String(i + 1).padStart(2, '0')}</span>
+                <span class="ch-body">
+                  <span class="ch-title">{ch.data.title}</span>
+                  <span class="ch-desc">{ch.data.description}</span>
+                </span>
+                <StatusBadge status={ch.data.status} lang={lang} />
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  )
+}
+
+<style>
+  .series-map {
+    background: var(--bg-sunk);
+  }
+  .chapter-list {
+    list-style: none;
+    counter-reset: none;
+  }
+  .chapter-list > li + li {
+    border-top: 1px solid var(--border);
+  }
+  .chapter-list a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem 0.85rem;
+    flex-wrap: wrap;
+    padding: 0.7rem 0.5rem;
+    margin-inline: -0.5rem;
+    border-radius: 7px;
+    text-decoration: none;
+    color: inherit;
+  }
+  .chapter-list a:hover {
+    background: var(--bg-elev);
+  }
+  .chapter-list a:hover .ch-title {
+    color: var(--accent);
+  }
+  .chapter-list .current > a {
+    background: var(--accent-soft);
+  }
+  .chapter-list .current .ch-title {
+    color: var(--accent);
+  }
+  .ch-num {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+  .ch-body {
+    flex: 1 1 16rem;
+    min-width: 0;
+  }
+  .ch-title {
+    display: block;
+    font-size: 0.9375rem;
+    font-weight: 550;
+  }
+  .ch-desc {
+    display: block;
+    font-size: 0.8125rem;
+    color: var(--text-2);
+    margin-top: 0.1rem;
+  }
+</style>

@@ -1,0 +1,106 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { LANGS, type Lang } from '../../../consts.ts';
+import { formatDate, groupNotes, noteSlug, path, published, t, touched } from '../../../i18n/utils.ts';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import StatusBadge from '../../../components/StatusBadge.astro';
+
+export const getStaticPaths: GetStaticPaths = () => LANGS.map((lang) => ({ params: { lang } }));
+
+const lang = Astro.params.lang as Lang;
+const tr = t(lang);
+
+const { series, standalone } = groupNotes(await published('notes', lang));
+const isEmpty = series.length === 0 && standalone.length === 0;
+---
+
+<BaseLayout lang={lang} title={tr('notes.title')} description={tr('notes.intro')} section="notes">
+  <div class="wrap">
+    <header class="page-head">
+      <h1>{tr('notes.title')}</h1>
+      <p class="lede">{tr('notes.intro')}</p>
+    </header>
+
+    {isEmpty && <p class="empty">{tr('notes.empty')}</p>}
+
+    {
+      series.map((s) => (
+        <section class="series-block">
+          <div class="section-head">
+            <h2>
+              <a href={path(lang, 'notes', s.slug)}>{s.title}</a>
+            </h2>
+            <span class="more" style="color:var(--text-3)">
+              {s.chapters.length > 0 && `${s.chapters.length} ${tr('notes.chapters')} · `}
+              {formatDate(s.updated, lang)}
+            </span>
+          </div>
+          {s.description && <p class="series-desc">{s.description}</p>}
+          {/* A series can legitimately have zero chapters in this language yet. */}
+          <ul class="row-list" hidden={s.chapters.length === 0}>
+            {s.chapters.map((ch, i) => (
+              <li>
+                <a class="row" href={path(lang, 'notes', noteSlug(ch))}>
+                  <span class="row-num">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="row-body">
+                    <span class="row-title">{ch.data.title}</span>
+                    <span class="row-desc">{ch.data.description}</span>
+                  </span>
+                  <span class="row-side">
+                    <StatusBadge status={ch.data.status} lang={lang} />
+                    {formatDate(touched(ch), lang)}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+
+    {
+      standalone.length > 0 && (
+        <section class="series-block">
+          <div class="section-head">
+            <h2>{tr('notes.standalone')}</h2>
+          </div>
+          <ul class="row-list">
+            {standalone.map((n) => (
+              <li>
+                <a class="row" href={path(lang, 'notes', noteSlug(n))}>
+                  <span class="row-body">
+                    <span class="row-title">{n.data.title}</span>
+                    <span class="row-desc">{n.data.description}</span>
+                  </span>
+                  <span class="row-side">
+                    <StatusBadge status={n.data.status} lang={lang} />
+                    {formatDate(touched(n), lang)}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .series-block + .series-block {
+    margin-top: 3rem;
+  }
+  .series-block .section-head h2 a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .series-block .section-head h2 a:hover {
+    color: var(--accent);
+  }
+  .series-desc {
+    font-size: 0.9rem;
+    color: var(--text-2);
+    margin-bottom: 0.9rem;
+    max-width: 60ch;
+  }
+</style>

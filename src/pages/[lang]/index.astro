@@ -1,0 +1,139 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { LANGS, SITE, type Lang } from '../../consts.ts';
+import { formatDate, groupNotes, noteSlug, path, published, t, touched } from '../../i18n/utils.ts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+
+export const getStaticPaths: GetStaticPaths = () => LANGS.map((lang) => ({ params: { lang } }));
+
+const lang = Astro.params.lang as Lang;
+const tr = t(lang);
+
+const notes = await published('notes', lang);
+const { series } = groupNotes(notes);
+
+// Newest activity across everything, so the front page shows a pulse.
+const recent = [...notes]
+  .sort((a, b) => touched(b).getTime() - touched(a).getTime())
+  .slice(0, 5);
+
+const sections = [
+  { key: 'notes', label: tr('nav.notes'), blurb: tr('home.notes.blurb'), count: notes.length },
+  { key: 'labs', label: tr('nav.labs'), blurb: tr('home.labs.blurb'), count: (await published('labs', lang)).length },
+  {
+    key: 'thoughts',
+    label: tr('nav.thoughts'),
+    blurb: tr('home.thoughts.blurb'),
+    count: (await published('thoughts', lang)).length,
+  },
+] as const;
+---
+
+<BaseLayout lang={lang} title={SITE.author}>
+  <div class="wrap">
+    <section class="hero">
+      <p class="eyebrow">{lang === 'zh' ? '个人主页' : 'Personal site'}</p>
+      <h1>{SITE.author}</h1>
+      <p class="hero-lede">
+        {
+          lang === 'zh'
+            ? '我在学 AI Agent 是怎么被搭起来的 —— 读别人的 harness、拆机制、自己动手复现。这里是过程的记录,包括那些我还没搞懂的部分。'
+            : "I'm working out how AI agents are actually built — reading other people's harnesses, taking mechanisms apart, rebuilding them myself. This is the log, including the parts I haven't figured out."
+        }
+      </p>
+    </section>
+
+    <nav class="card-grid section-cards" aria-label={lang === 'zh' ? '板块' : 'Sections'}>
+      {
+        sections.map((s) => (
+          <a class="card" href={path(lang, s.key)}>
+            <h3>{s.label}</h3>
+            <p>{s.blurb}</p>
+            <span class="card-meta">{s.count > 0 ? `${s.count}` : '—'}</span>
+          </a>
+        ))
+      }
+    </nav>
+
+    {
+      series.length > 0 && (
+        <section class="home-block">
+          <div class="section-head">
+            <h2>{tr('notes.series')}</h2>
+            <a class="more" href={path(lang, 'notes')}>
+              {tr('home.viewAll')} →
+            </a>
+          </div>
+          <ul class="row-list">
+            {series.map((s) => (
+              <li>
+                <a class="row" href={path(lang, 'notes', s.slug)}>
+                  <span class="row-body">
+                    <span class="row-title">{s.title}</span>
+                    <span class="row-desc">{s.description}</span>
+                  </span>
+                  <span class="row-side">
+                    {s.chapters.length} {tr('notes.chapters')}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      recent.length > 0 && (
+        <section class="home-block">
+          <div class="section-head">
+            <h2>{tr('home.recent')}</h2>
+          </div>
+          <ul class="row-list">
+            {recent.map((n) => (
+              <li>
+                <a class="row" href={path(lang, 'notes', noteSlug(n))}>
+                  <span class="row-body">
+                    <span class="row-title">{n.data.title}</span>
+                    <span class="row-desc">{n.data.description}</span>
+                  </span>
+                  <span class="row-side">
+                    <StatusBadge status={n.data.status} lang={lang} />
+                    {formatDate(touched(n), lang)}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .hero {
+    max-width: 46rem;
+    margin-bottom: 3rem;
+  }
+  .hero h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(2.1rem, 6vw, 3.1rem);
+    font-weight: 600;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin-block: 0.4rem 1rem;
+  }
+  .hero-lede {
+    font-size: clamp(1rem, 2.2vw, 1.1875rem);
+    color: var(--text-2);
+    line-height: 1.72;
+  }
+  .section-cards {
+    margin-bottom: 3.5rem;
+  }
+  .home-block + .home-block {
+    margin-top: 3rem;
+  }
+</style>

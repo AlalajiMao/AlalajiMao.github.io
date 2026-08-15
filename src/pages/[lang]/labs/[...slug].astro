@@ -1,0 +1,64 @@
+---
+import type { GetStaticPaths } from 'astro';
+import type { CollectionEntry } from 'astro:content';
+import { LANGS, type Lang } from '../../../consts.ts';
+import { otherLang, path, publishedAllLangs, splitId, t } from '../../../i18n/utils.ts';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PostArticle from '../../../components/PostArticle.astro';
+import TranslationFallback from '../../../components/TranslationFallback.astro';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const all = await publishedAllLangs('labs');
+
+  const byKey = new Map<string, Partial<Record<Lang, CollectionEntry<'labs'>>>>();
+  for (const entry of all) {
+    const { lang, key } = splitId(entry.id);
+    byKey.set(key, { ...byKey.get(key), [lang]: entry });
+  }
+
+  return [...byKey.entries()].flatMap(([slug, variants]) =>
+    LANGS.map((lang) => ({
+      params: { lang, slug },
+      props: {
+        entry: variants[lang],
+        slug,
+        availableIn: LANGS.filter((l) => variants[l] !== undefined),
+      },
+    })),
+  );
+};
+
+interface Props {
+  entry?: CollectionEntry<'labs'>;
+  slug: string;
+  availableIn: Lang[];
+}
+
+const lang = Astro.params.lang as Lang;
+const { entry, slug, availableIn } = Astro.props as Props;
+
+const other = otherLang(lang);
+const availableLang = availableIn.find((l) => l !== lang) ?? other;
+---
+
+<BaseLayout
+  lang={lang}
+  title={entry?.data.title ?? t(lang)('fallback.title')}
+  description={entry?.data.description}
+  section="labs"
+  altHref={path(other, 'labs', slug)}
+  canonical={entry ? undefined : path(availableLang, 'labs', slug)}
+>
+  {
+    entry ? (
+      <PostArticle entry={entry} lang={lang} />
+    ) : (
+      <TranslationFallback
+        lang={lang}
+        availableLang={availableLang}
+        href={path(availableLang, 'labs', slug)}
+        backHref={path(lang, 'labs')}
+      />
+    )
+  }
+</BaseLayout>
