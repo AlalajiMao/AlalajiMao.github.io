@@ -1,0 +1,62 @@
+---
+/**
+ * GitHub Pages serves dist/404.html for any unmatched path. There is exactly
+ * one of these for the whole site, so it can't know the visitor's language —
+ * hence both languages inline rather than a redirect guess.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { path } from '../i18n/utils.ts';
+---
+
+<BaseLayout lang="zh" title="404" description="页面不存在 / Page not found">
+  <div class="prose-wrap">
+    <div class="notfound">
+      <p class="code">404</p>
+      <h1>这个页面不存在</h1>
+      <p class="sub" lang="en">This page doesn’t exist.</p>
+      <p class="hint">
+        可能是链接过期了,或者我把内容挪走了。
+        <span lang="en">The link may be stale, or I moved the content.</span>
+      </p>
+      <div class="btn-row">
+        <a class="btn" href={path('zh')}>回首页</a>
+        <a class="btn btn-ghost" href={path('en')} lang="en" hreflang="en">Home</a>
+        <a class="btn btn-ghost" href={path('zh', 'notes')}>学习笔记 / Notes</a>
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .notfound {
+    max-width: 34rem;
+    margin-inline: auto;
+    text-align: center;
+    padding-block: 2rem;
+  }
+  .code {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: 0.18em;
+    color: var(--text-3);
+  }
+  .notfound h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(1.6rem, 5vw, 2.1rem);
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
+  .sub {
+    color: var(--text-2);
+    font-size: 1.0625rem;
+    margin-top: 0.3rem;
+  }
+  .hint {
+    color: var(--text-3);
+    font-size: 0.875rem;
+    margin-block: 1.25rem 1.75rem;
+  }
+  .hint span {
+    display: block;
+  }
+</style>
